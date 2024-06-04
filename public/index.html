@@ -1,43 +1,91 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Chat ao Vivo</title>
-  <style>
-    body { font-family: Arial, sans-serif; }
-    #messages { list-style-type: none; padding: 0; }
-    #messages li { padding: 8px; margin-bottom: 10px; background-color: #f1f1f1; }
-    #form { display: flex; }
-    #input { flex: 1; padding: 10px; }
-    #button { padding: 10px; }
-  </style>
-</head>
-<body>
-  <ul id="messages"></ul>
-  <form id="form" action="">
-    <input id="input" autocomplete="off" /><button id="button">Enviar</button>
-  </form>
+	<head>
+		<title>Chat ao Vivo com Imagens</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+			}
+			#messages {
+				list-style-type: none;
+				padding: 0;
+			}
+			#messages li {
+				padding: 8px;
+				margin-bottom: 10px;
+				background-color: #f1f1f1;
+				font-family: monospace;
+				white-space: pre;
+			}
+			#form {
+				display: flex;
+			}
+			#input {
+				flex: 1;
+				padding: 10px;
+			}
+			#button {
+				padding: 10px;
+			}
+		</style>
+	</head>
+	<body>
+		<ul id="messages"></ul>
+		<form id="form" action="">
+			<input
+				id="input"
+				autocomplete="off"
+				placeholder="Digite uma mensagem"
+			/><button id="button">Enviar</button>
+			<input type="file" id="imageInput" />
+		</form>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io();
+		<script src="/socket.io/socket.io.js"></script>
+		<script>
+			const socket = io();
 
-    // Enviando mensagem
-    document.getElementById('form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const input = document.getElementById('input');
-      if (input.value) {
-        socket.emit('chat message', input.value);
-        input.value = '';
-      }
-    });
+			// Enviando mensagem
+			document.getElementById("form").addEventListener("submit", (e) => {
+				e.preventDefault();
+				const input = document.getElementById("input");
+				if (input.value) {
+					socket.emit("chat message", input.value);
+					input.value = "";
+				}
+			});
 
-    // Recebendo mensagem
-    socket.on('chat message', (msg) => {
-      const item = document.createElement('li');
-      item.textContent = msg;
-      document.getElementById('messages').appendChild(item);
-      window.scrollTo(0, document.body.scrollHeight);
-    });
-  </script>
-</body>
+			// Enviando imagem
+			document
+				.getElementById("imageInput")
+				.addEventListener("change", (e) => {
+					const file = e.target.files[0];
+					if (file) {
+						const reader = new FileReader();
+						reader.onload = function (evt) {
+							socket.emit("chat image", evt.target.result);
+						};
+						reader.readAsDataURL(file);
+					}
+				});
+
+			// Recebendo mensagem
+			socket.on("chat message", (msg) => {
+				const item = document.createElement("li");
+				item.textContent = msg;
+				document.getElementById("messages").appendChild(item);
+				window.scrollTo(0, document.body.scrollHeight);
+			});
+
+			// Recebendo imagem
+			socket.on("chat image", (imageData) => {
+				const item = document.createElement("li");
+				const img = document.createElement("img");
+				img.src = imageData;
+				img.style.maxWidth = "100%";
+				item.appendChild(img);
+				document.getElementById("messages").appendChild(item);
+				window.scrollTo(0, document.body.scrollHeight);
+			});
+		</script>
+	</body>
 </html>
